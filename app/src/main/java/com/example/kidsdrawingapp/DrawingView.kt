@@ -7,17 +7,19 @@ import android.graphics.Color
 import android.graphics.Paint
 import android.graphics.Path
 import android.util.AttributeSet
+import android.util.Log
 import android.view.MotionEvent
 import android.view.View
 
 class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
-    private var mDrawPath : CustomPath? = null
+    private var canvas :Canvas? = null
     private var mCanvasBitmap : Bitmap? = null
-    private var mDrawPaint : Paint ? = null
     private var mCanvasPaint : Paint ? = null
+    private var mDrawPaint : Paint ? = null
+    private var mDrawPath : CustomPath? = null
     private var mBrushSize : Float = 0F
     private var color = Color.BLACK
-    private var canvas :Canvas? = null
+    private val mPaths = ArrayList<CustomPath>()
 
 
 
@@ -46,6 +48,12 @@ class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
     override fun onDraw(canvas: Canvas) {
         super.onDraw(canvas)
         canvas.drawBitmap(mCanvasBitmap!!,0F,0F,mCanvasPaint)
+
+        for (path in mPaths){
+            mDrawPaint!!.strokeWidth = path.brushThickness
+            mDrawPaint!!.color = path.color
+            canvas.drawPath(path,mDrawPaint!!)
+        }
         if (!mDrawPath!!.isEmpty){
             mDrawPaint!!.strokeWidth = mDrawPath!!.brushThickness
             mDrawPaint!!.color = mDrawPath!!.color
@@ -57,9 +65,8 @@ class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
     override fun onTouchEvent(event: MotionEvent?): Boolean {
         val touchX = event?.x
         val touchY = event?.y
-
         when(event?.action){
-            MotionEvent.ACTION_DOWN ->{
+            MotionEvent.ACTION_DOWN -> {
                 mDrawPath!!.color = color
                 mDrawPath!!.brushThickness = mBrushSize
 
@@ -67,11 +74,12 @@ class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
                 mDrawPath!!.moveTo(touchX!!,touchY!!)
             }
 
-            MotionEvent.ACTION_MOVE ->{
+            MotionEvent.ACTION_MOVE -> {
                 mDrawPath!!.lineTo(touchX!!,touchY!!)
             }
 
-            MotionEvent.ACTION_UP ->{
+            MotionEvent.ACTION_UP -> {
+                mPaths.add(mDrawPath!!)
                 mDrawPath = CustomPath(color,mBrushSize)
             }
             else -> return false
