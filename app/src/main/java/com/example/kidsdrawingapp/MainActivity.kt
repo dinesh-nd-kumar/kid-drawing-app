@@ -3,9 +3,12 @@ package com.example.kidsdrawingapp
 import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
+import android.content.Intent
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.View
 import android.widget.ImageButton
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
 import androidx.activity.enableEdgeToEdge
@@ -23,6 +26,15 @@ class MainActivity : AppCompatActivity() {
     private var drawingView: DrawingView? = null
     private var mImageButtonCurrentPaint : ImageButton? = null
 
+    private val openGalleryLancher : ActivityResultLauncher<Intent> =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult(),){
+            result ->
+            if (result.resultCode == RESULT_OK && result.data != null){
+                val imageBackground: ImageView =findViewById(R.id.iv_background_image)
+                imageBackground.setImageURI(result.data?.data)
+            }
+        }
+
     private val requestPermission: ActivityResultLauncher<Array<String>> =
         registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()){
             permissions ->
@@ -32,6 +44,9 @@ class MainActivity : AppCompatActivity() {
 
                 if (isGranted){
                     Toast.makeText(this,"permission granted",Toast.LENGTH_LONG).show()
+                    val pickIntent = Intent(Intent.ACTION_PICK,MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
+                    openGalleryLancher.launch(pickIntent)
+
                 }
                 else{
                     if (permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
@@ -61,7 +76,18 @@ class MainActivity : AppCompatActivity() {
         }
 
         val ibGallery : ImageButton = findViewById(R.id.ib_gallery)
-        ibGallery.setOnClickListener { requestStoragePermission() }
+        ibGallery.setOnClickListener {
+            requestStoragePermission()
+        }
+
+        val ibUndo: ImageButton = findViewById(R.id.ib_undo)
+        ibUndo.setOnClickListener {
+            drawingView?.onUndoClicked()
+        }
+        val ibRedo: ImageButton = findViewById(R.id.ib_redo)
+        ibRedo.setOnClickListener {
+            drawingView?.onRedoClicked()
+        }
 
 
     }

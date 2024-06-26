@@ -21,6 +21,7 @@ class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
     private var mBrushSize : Float = 0F
     private var color = Color.BLACK
     private val mPaths = ArrayList<CustomPath>()
+    private val mUndoPaths = ArrayList<CustomPath>()
 
 
 
@@ -99,6 +100,20 @@ class DrawingView(context: Context,attrs:AttributeSet) : View(context,attrs) {
     fun setColorForBrush(newColor:String){
         color = Color.parseColor(newColor)
         mDrawPaint!!.color = color
+    }
+    fun onUndoClicked(){
+        if (mPaths.size > 0) {
+            mUndoPaths.add(mPaths.removeLast())
+            invalidate()
+        }
+
+    }
+
+    fun onRedoClicked() {
+        if (mUndoPaths.size > 0){
+            mPaths.add(mUndoPaths.removeLast())
+            invalidate()
+        }
     }
 
 
