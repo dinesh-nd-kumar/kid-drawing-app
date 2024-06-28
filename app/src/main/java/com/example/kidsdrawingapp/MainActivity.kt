@@ -4,22 +4,31 @@ import android.Manifest
 import android.app.AlertDialog
 import android.app.Dialog
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.graphics.Bitmap
+import android.graphics.Canvas
+import android.graphics.Color
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
+import android.widget.FrameLayout
 import android.widget.ImageButton
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
-import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.get
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.io.File
+import java.io.FileOutputStream
 
 class MainActivity : AppCompatActivity() {
 
@@ -51,8 +60,6 @@ class MainActivity : AppCompatActivity() {
                 else{
                     if (permissionName == Manifest.permission.READ_EXTERNAL_STORAGE){
                         Toast.makeText(this,"permission denied",Toast.LENGTH_LONG).show()
-
-
 
                     }
                 }
@@ -89,6 +96,28 @@ class MainActivity : AppCompatActivity() {
             drawingView?.onRedoClicked()
         }
 
+        val ibSave: ImageButton = findViewById(R.id.ib_save)
+        ibSave.setOnClickListener {
+            if (isReadStorageAllowed()){
+                lifecycleScope.launch {
+                    val frameLayout : FrameLayout = findViewById(R.id.drawing_view_container)
+                    saveBitmapFile(getBitmapfromView(frameLayout))
+
+
+
+
+                }
+            }
+            
+        }
+
+
+    }
+
+    private fun isReadStorageAllowed(): Boolean{
+        val result = ContextCompat.checkSelfPermission(this,
+            Manifest.permission.READ_EXTERNAL_STORAGE)
+        return result == PackageManager.PERMISSION_GRANTED
 
     }
 
@@ -100,7 +129,8 @@ class MainActivity : AppCompatActivity() {
         }
         else{
             requestPermission.launch(arrayOf(
-                Manifest.permission.READ_EXTERNAL_STORAGE
+                Manifest.permission.READ_EXTERNAL_STORAGE,
+                Manifest.permission.WRITE_EXTERNAL_STORAGE,
             ))
         }
     }
@@ -159,5 +189,47 @@ class MainActivity : AppCompatActivity() {
         builder.create().show()
 
 
+    }
+
+    private fun getBitmapfromView(v : View): Bitmap{
+        val rBitmap = Bitmap.createBitmap(v.width,v.height,Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(rBitmap)
+        val bgDrawable = v.background
+        if (bgDrawable != null)
+            bgDrawable.draw(canvas)
+        else
+            canvas.drawColor(Color.WHITE)
+        v.draw(canvas)
+
+        return rBitmap
+    }
+
+    private suspend fun saveBitmapFile(bitmap: Bitmap): String{
+        var result = ""
+        withContext(Dispatchers.IO){
+            if (bitmap != null){
+                val byte = ByteArrayOutputStream()
+                bitmap.compress(Bitmap.CompressFormat.JPEG,98,byte)
+                val file = File(externalCacheDir?.absolutePath.toString()
+                        + File.separator + "kids_drawing_app" + System.currentTimeMillis()/1000 +".jpeg")
+
+                val fileOutputStream = FileOutputStream(file)
+                fileOutputStream.write(byte.toByteArray())
+                fileOutputStream.close()
+                result = file.absolutePath
+
+                runOnUiThread {
+                    if (result.isNotEmpty()){
+                        Toast.makeText(this@MainActivity, "saved at: $result", Toast.LENGTH_SHORT).show()
+                    }
+                    else
+                    Toast.makeText(this@MainActivity, "something wrong", Toast.LENGTH_SHORT).show()
+                }
+
+
+            }
+
+        }
+        return result
     }
 }
