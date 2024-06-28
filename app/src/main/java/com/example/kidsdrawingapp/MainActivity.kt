@@ -9,6 +9,7 @@ import android.graphics.Bitmap
 import android.graphics.Canvas
 import android.graphics.Color
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.view.View
 import android.widget.FrameLayout
@@ -210,7 +211,8 @@ class MainActivity : AppCompatActivity() {
             if (bitmap != null){
                 val byte = ByteArrayOutputStream()
                 bitmap.compress(Bitmap.CompressFormat.JPEG,98,byte)
-                val file = File(externalCacheDir?.absolutePath.toString()
+                val pictureDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
+                val file = File(pictureDir.absolutePath.toString()
                         + File.separator + "kids_drawing_app" + System.currentTimeMillis()/1000 +".jpeg")
 
                 val fileOutputStream = FileOutputStream(file)
@@ -220,7 +222,7 @@ class MainActivity : AppCompatActivity() {
 
                 runOnUiThread {
                     if (result.isNotEmpty()){
-                        Toast.makeText(this@MainActivity, "saved at: $result", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, "saved at: $result", Toast.LENGTH_LONG).show()
                     }
                     else
                     Toast.makeText(this@MainActivity, "something wrong", Toast.LENGTH_SHORT).show()
